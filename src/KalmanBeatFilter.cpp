@@ -26,11 +26,11 @@ KalmanBeatFilter::KalmanBeatFilter(){
     processSigmaX = 5;//std dev for process noise x in msec, does the underlying beat move?
     //yes I suppose so
     
-    processSigmaV = 3;//std dev for period v
+    processSigmaV = 4;//std dev for period v
     
     
-    measureSigmaX = 20;//std dev for x in msec, measuring the expressive timing, observation error
-    measureSigmaV = 3;//std dev for period v
+    measureSigmaX = 10;//std dev for x in msec, measuring the expressive timing, observation error
+    measureSigmaV = 6;//std dev for period v
     
     
     //x_n = x_(n-1) + v_(n-1) + noise
@@ -52,15 +52,17 @@ KalmanBeatFilter::KalmanBeatFilter(){
     
     //an example set of observations: first is beat position, then the period
     
-    newMeasurement(510, 505);
-    newMeasurement(1012, 506.4);
+    if (false){//set to true for example of this working
+        newMeasurement(510, 505);
+        newMeasurement(1012, 506.4);
 
-    newMeasurement(1502, 502.4);
-    newMeasurement(2008, 500.4);
+        newMeasurement(1502, 502.4);
+        newMeasurement(2008, 500.4);
     
-    newMeasurement(2548, 507.4);
+        newMeasurement(2548, 507.4);
     
-    newMeasurement(2978, 500.4);
+        newMeasurement(2978, 500.4);
+    }
     
 }
 
@@ -74,6 +76,8 @@ KalmanBeatFilter::~KalmanBeatFilter(){
 
 
 void KalmanBeatFilter::setInitialTempo(float beatTime, float period){
+    latestPositionEstimate = beatTime;
+    latestPeriodEstimate = period;
     KF.statePost = *(cv::Mat_<float>(2,1) << beatTime, period);
 }
 
@@ -117,10 +121,10 @@ void KalmanBeatFilter::newMeasurement(float observedX, float observedV){
     
     cv::Mat prediction = KF.predict();
     
-    printf("\nobserved %f, %f\n", observedX, observedV);
+    printf("\nKBF: observed %f, %f\n", observedX, observedV);
     
     
-    printf("preditc %f, %f\n", KF.statePre.at<float>(0), KF.statePre.at<float>(1));
+    printf("KBF: preditc %f, %f\n", KF.statePre.at<float>(0), KF.statePre.at<float>(1));
     
     measurement(0) = observedX;
     measurement(1) = observedV;
@@ -129,10 +133,13 @@ void KalmanBeatFilter::newMeasurement(float observedX, float observedV){
     
     cv::Mat estimated = KF.correct(measurement);
     
-    float x_ = estimated.at<float>(0);
-    float v_ = estimated.at<float>(1);
+    latestPositionEstimate = estimated.at<float>(0);
+    latestPeriodEstimate = estimated.at<float>(1);
     
-    printf("estimate %f, %f\n", x_, v_);
+    printf("KBF: estimate %f, %f\n", latestPositionEstimate, latestPeriodEstimate);
     
+}
 
+float KalmanBeatFilter::latestPrediction(){
+    return latestPositionEstimate;
 }

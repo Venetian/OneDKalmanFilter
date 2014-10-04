@@ -34,6 +34,11 @@ public:
     
     cv::KalmanFilter KF;
 	cv::Mat_<float> measurement;
+    
+    float latestPrediction();
+    
+    float latestPositionEstimate;
+    float latestPeriodEstimate;
 };
 
 #endif /* defined(__KalmanFilterBeatTest__KalmanBeatFilter__) */
